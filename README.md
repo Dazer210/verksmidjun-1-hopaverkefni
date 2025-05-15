@@ -1,7 +1,10 @@
-# verksmidjun-1-hopaverkefni
 
-## Höfundar Dawid og Erik
+<h1 align="center"> Verksmidjun-1-Hopaverkefni </h1>
+<h2 align="center"> Borð Spil </h2>
 
+<h3 align="center"> Höfundar Dawid og Erik </h3>
 
- Mynd af splinu
+<br><br>
+
+### Mynd af Splinu
 ![Bordspil_lok(235x400)](https://github.com/user-attachments/assets/4ea4cb1a-d57a-4d26-aa5e-d099854caed8)
