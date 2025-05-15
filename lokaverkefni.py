@@ -1,62 +1,69 @@
+
 from machine import Pin, PWM
 from time import ticks_ms
 import urandom
 
-# Ljósa stillingar
-led_1 = Pin(11, Pin.OUT)
-led_2 = Pin(12, Pin.OUT)
-led_3 = Pin(13, Pin.OUT)
-led_4 = Pin(14, Pin.OUT)
-led_5 = Pin(15, Pin.OUT)
-led_6 = Pin(16, Pin.OUT)
-led_7 = Pin(10, Pin.OUT)
+# LED tengingar (6 LED)
 
-# Takkastillingar
+leds = [Pin(i, Pin.OUT) for i in range(11, 17)]
+led_7 = Pin(10, Pin.OUT)  # kast LED
+
 takki = Pin(9, Pin.IN, Pin.PULL_UP)
+buzzer = PWM(Pin(14), 2446)
 
-# Buzzer
-buzzer=PWM(Pin(14),2446)
+players = [1, 1, 1, 1]
+current_player = 0
 
-#tengja saman leds
-leds = [led_1, led_2, led_3, led_4, led_5, led_6]
+last_press_time = 0
+press_interval = 1000
+button_was_pressed = False
 
-#seta players í hópa
-players = [1, 1, 1, 1]  # Initial positions
-current_player = 0  # Start with player 1
+led_on = False
+led_on_start = 0
+led_on_duration = 1000
 
 while True:
     buzzer.deinit()
-    if takki.value():  # Button is pressed
-        teningur = urandom.randint(1, 6)  # Roll dice
-        players[current_player] += teningur  # Move current player
+    now = ticks_ms()
+    button_state = takki.value()
 
-        # Light up corresponding LED based on dice roll
-        led_7.value(1)  # Indicate action
-        leds[teningur - 1].value(1)  # Light up based on dice roll
-
-        print(f"Player {current_player+1} rolled {teningur}, now at position {players[current_player]}")
-
-        # Special positions that send players backward
-        setbacks = {34: 11, 32: 21, 16: 6}
-        if players[current_player] in setbacks:
-            print(f"Player {current_player+1} landed on {players[current_player]}! Moving back to {setbacks[players[current_player]]}.")
-            players[current_player] = setbacks[players[current_player]]
-
-        # Check for win condition
-        if players[current_player] >= 36:
-            print(f"Leikurinn er búinn! Player {current_player+1} vann!")
-            buzzer.init(2446)
-            break  # End the game
-
-        # Turn off LEDs after action
-        leds[teningur - 1].value(0)
+    # Slökkva á LED eftir 1 sekúndu
+    if led_on and (now - led_on_start) > led_on_duration:
+        for led in leds:
+            led.value(0)
         led_7.value(0)
+        led_on = False
 
-        # Move to the next player
-        current_player = (current_player + 1) % len(players)
+    if button_state == 0:
+        if not button_was_pressed and (now - last_press_time) > press_interval:
+            last_press_time = now
+            button_was_pressed = True
 
-        # Wait for button release before proceeding
-        while takki.value():
-            pass
+            teningur = urandom.randint(1, 6)
+            players[current_player] += teningur
+
+            # Kveikja á LED 1 til teningur
+            for i in range(teningur):
+                leds[i].value(1)
+
+            led_7.value(1)
+            led_on = True
+            led_on_start = now
+
+            print(f"Player {current_player+1} kastar {teningur}, staða: {players[current_player]}")
+
+            setbacks = {34: 11, 32: 21, 16: 6}
+            if players[current_player] in setbacks:
+                print(f"Player {current_player+1} lenti á reit {players[current_player]}! Færist aftur í {setbacks[players[current_player]]}.")
+                players[current_player] = setbacks[players[current_player]]
+
+            if players[current_player] >= 36:
+                print(f"Leikurinn er búinn! Player {current_player+1} vann!")
+                buzzer.init(2446)
+                break
+
+            current_player = (current_player + 1) % len(players)
+
     else:
-        pass
+        button_was_pressed = False
+
